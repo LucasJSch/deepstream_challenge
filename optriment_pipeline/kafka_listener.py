@@ -8,35 +8,31 @@ conf = {
     'auto.offset.reset': 'earliest'  # Start from the earliest message
 }
 
-# Create a Kafka consumer instance
+
 consumer = Consumer(conf)
 
-# Kafka topic from msgbroker config
+
 topic = 'topic1'
 
-# Subscribe to the Kafka topic
+
 consumer.subscribe([topic])
 
 def consume_messages():
     try:
         while True:
-            # Poll for new messages (blocking call)
-            msg = consumer.poll(timeout=1.0)  # Adjust timeout based on your needs
+            msg = consumer.poll(timeout=1.0) 
 
-            if msg is None:  # No message, timeout
+            if msg is None: 
                 continue
             if msg.error():
                 if msg.error().code() == KafkaError._PARTITION_EOF:
                     # End of partition, no more messages
                     print(f"End of partition reached {msg.partition} @ {msg.offset}")
                 else:
-                    # Error while consuming
                     raise KafkaException(msg.error())
             else:
-                # Successfully received message
                 message_value = msg.value().decode('utf-8')
                 try:
-                    # Assuming the payload is JSON (as suggested by payload-type: 0)
                     message_data = json.loads(message_value)
                     print(f"Consumed message: {json.dumps(message_data, indent=4)}")
 
@@ -49,7 +45,6 @@ def consume_messages():
         print("Consumer interrupted, closing...")
 
     finally:
-        # Gracefully close the consumer
         consumer.close()
 
 if __name__ == "__main__":
