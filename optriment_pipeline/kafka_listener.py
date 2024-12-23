@@ -8,13 +8,8 @@ conf = {
     'auto.offset.reset': 'earliest'  # Start from the earliest message
 }
 
-
 consumer = Consumer(conf)
-
-
 topic = 'topic1'
-
-
 consumer.subscribe([topic])
 
 def consume_messages():
