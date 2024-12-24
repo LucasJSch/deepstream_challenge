@@ -33,13 +33,21 @@ void initializer(int argc, char *argv[])
 int main (int argc, char *argv[])
 {
     optriment::ArgParser arg_parser(argc, argv);
+    char* file_path;
+    std::string roi1_config;
+    std::string roi2_config;
     if (!arg_parser.hasOption("--config") || !arg_parser.hasOption("--roi1") || !arg_parser.hasOption("--roi2")) {
-        g_printerr ("Usage: %s --config <config-file-path> --roi1 <roi1-config-file> --roi2 <roi2-config-file>\n", argv[0]);
-        return -1;
+        g_printerr("Usage: %s --config <config-file-path> --roi1 <roi1-config-file> --roi2 <roi2-config-file>\n", argv[0]);
+        g_printerr("Using default config\n");
+        file_path = "../config/pipeline_config.yml";
+        roi1_config = "../config/roi1.txt";
+        roi2_config = "../config/roi2.txt";
+    } else {
+        file_path = arg_parser.getOptionValue("--config");
+        roi1_config = arg_parser.getOptionValue("--roi1");
+        roi2_config = arg_parser.getOptionValue("--roi2");
     }
     initializer(argc, argv);
-    std::string roi1_config = arg_parser.getOptionValue("--roi1");
-    std::string roi2_config = arg_parser.getOptionValue("--roi2");
     NvDsGieType pgie_type;
 
     optriment::Pipeline pipeline("optriment-pipeline");
@@ -62,7 +70,6 @@ int main (int argc, char *argv[])
     .addElement("nvmsgconv", "msg-converter")
     .addElement("nveglglessink", "video-renderer");
 
-    char* file_path = arg_parser.getOptionValue("--config");
     RETURN_ON_PARSER_ERROR(nvds_parse_gie_type(&pgie_type, file_path,
         "primary-gie"));
 
@@ -92,6 +99,30 @@ int main (int argc, char *argv[])
     pipeline.linkWithRequestPadTee("broker-tee", "broker-video-tee");
     pipeline.linkWithRequestPadTee("video-tee", "broker-video-tee");
 
+    pipeline.attachProbe([](GstPad* pad, GstPadProbeInfo* info, gpointer u_data) {
+        GstBuffer* buffer = gst_pad_probe_info_get_buffer(info);
+        NvDsBatchMeta* batch_meta = gst_buffer_get_nvds_batch_meta(buffer);
+        g_printerr("scheink");
+        if (batch_meta == nullptr) {
+            return GST_PAD_PROBE_OK;
+        }
+        for (NvDsMetaList* l_frame = batch_meta->frame_meta_list; l_frame != nullptr; l_frame = l_frame->next) {
+            NvDsFrameMeta* frame_meta = (NvDsFrameMeta*)l_frame->data;
+            if (frame_meta == nullptr) {
+                continue;
+            }
+            for (NvDsMetaList* l_obj = frame_meta->obj_meta_list; l_obj != nullptr; l_obj = l_obj->next) {
+                NvDsObjectMeta* obj_meta = (NvDsObjectMeta*)l_obj->data;
+                if (obj_meta == nullptr) {
+                    continue;
+                }
+                g_print("Object: %s\n", obj_meta->obj_label);
+            }
+        }
+        return GST_PAD_PROBE_OK;
+    }, "on-screen-display", "sink");
+
+    // TODO: Move to run().
     gst_element_set_state(pipeline.getPipeline(), GST_STATE_PLAYING);
     pipeline.run();
     return 0;

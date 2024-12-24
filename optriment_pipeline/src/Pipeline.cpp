@@ -184,3 +184,15 @@ void Pipeline::log(const char* message) const
 {
     g_printerr(message);
 }
+
+void Pipeline::attachProbe(ProbeCallback cb, const std::string& elementName, const std::string& padName)
+{
+    GstPad* pad = gst_element_get_static_pad(getElement(elementName), padName.c_str());
+    if (!pad) {
+        log("Failed to get sink pad. Exiting.\n");
+        exit(-1);
+    }
+
+    gst_pad_add_probe(pad, GST_PAD_PROBE_TYPE_BUFFER, cb, NULL, NULL);
+    gst_object_unref (pad);
+}
