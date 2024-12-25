@@ -103,26 +103,26 @@ class CustomKafkaProducer {
       std::cerr << "Failed to create producer: " << errstr << std::endl;
       exit(1);
     }
-
-    cb_ = std::shared_ptr<ExampleDeliveryReportCb>();
   }
 
-  void setCallback(std::shared_ptr<RdKafka::DeliveryReportCb> cb) {
-    std::string errstr;
-    if (conf_->set("dr_cb", cb.get(), errstr) != RdKafka::Conf::CONF_OK) {
-      std::cerr << errstr << std::endl;
-      exit(1);
-    }
-  }
-
-  std::shared_ptr<RdKafka::Producer> getProducer() {
-    return producer_;
+  void sendMessage(const std::shared_ptr<Serializable> message)
+  {
+    char* payload = message->toBytes();
+    producer_->produce(
+        topic_,
+        RdKafka::Topic::PARTITION_UA,
+        RdKafka::Producer::RK_MSG_COPY,
+        payload, strlen(payload),
+        NULL,
+        0,
+        0,
+        NULL,
+        NULL);
   }
 
 private:
   std::shared_ptr<RdKafka::Conf> conf_;
   std::shared_ptr<RdKafka::Producer> producer_;
-  std::shared_ptr<RdKafka::DeliveryReportCb> cb_;
   std::string brokers_;
   std::string topic_;
 };
@@ -138,31 +138,15 @@ int main(int argc, char **argv) {
 
   for (std::string line; run && std::getline(std::cin, line);) {
     if (line.empty()) {
-      producer.getProducer()->poll(0);
       continue;
     }
 
     CustomMessage message;
     message.zone1_count = 10;
     message.zone2_count = 20;
-    producer.getProducer()->produce(
-        "topic1",
-        RdKafka::Topic::PARTITION_UA,
-        RdKafka::Producer::RK_MSG_COPY,
-        message.toBytes(), strlen(message.toBytes()),
-        NULL, 0,
-        0,
-        NULL,
-        NULL);
-
+    producer.sendMessage(std::make_shared<CustomMessage>(message));
   }
   std::cerr << "% Flushing final messages..." << std::endl;
-  producer.getProducer()->flush(10 * 1000 /* wait for max 10 seconds */);
-
-  if (producer.getProducer()->outq_len() > 0)
-    std::cerr << "% " << producer.getProducer()->outq_len()
-              << " message(s) were not delivered" << std::endl;
-
 
   return 0;
 }
