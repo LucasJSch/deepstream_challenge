@@ -1,24 +1,12 @@
 #include <iostream>
 #include <string>
-#include <cstdlib>
-#include <cstdio>
-#include <csignal>
 #include <cstring>
 #include <sstream>
 #include <memory>
 
-#if _AIX
-#include <unistd.h>
-#endif
-
 #include <librdkafka/rdkafkacpp.h>
 
-
-static volatile sig_atomic_t run = 1;
-
-static void sigterm(int sig) {
-  run = 0;
-}
+namespace optriment {
 
 class Serializable 
 {
@@ -126,27 +114,4 @@ private:
   std::string brokers_;
   std::string topic_;
 };
-
-int main(int argc, char **argv) {
-  if (argc != 3) {
-    std::cerr << "Usage: " << argv[0] << " <brokers> <topic>\n";
-    exit(1);
-  }
-
-
-  CustomKafkaProducer producer(argv[1], argv[2]);
-
-  for (std::string line; run && std::getline(std::cin, line);) {
-    if (line.empty()) {
-      continue;
-    }
-
-    CustomMessage message;
-    message.zone1_count = 10;
-    message.zone2_count = 20;
-    producer.sendMessage(std::make_shared<CustomMessage>(message));
-  }
-  std::cerr << "% Flushing final messages..." << std::endl;
-
-  return 0;
-}
+} // namespace optriment
