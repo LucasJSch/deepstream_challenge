@@ -1,13 +1,13 @@
 #pragma once
 
 #include <iostream>
-#include <vector>
-#include <string>
 #include <sstream>
+#include <string>
+#include <vector>
 
-namespace optriment{
+namespace optriment {
 class ArgParser {
-public:
+   public:
     ArgParser(int argc, char** argv) {
         // Tokenize the input arguments and store them in the vector
         for (int i = 0; i < argc; ++i) {
@@ -46,9 +46,9 @@ public:
         return positionalArgs;
     }
 
-private:
+   private:
     std::vector<std::string> tokens;
     // This class will store the input arguments and supposes this pointer will be valid until end of program.
     char** arguments;
 };
-} // namespace optriment
+}  // namespace optriment

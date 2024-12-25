@@ -1,18 +1,17 @@
+#include "RegionCountMessage.h"
+
 #include <cstring>
 #include <sstream>
 #include <string>
 
-#include "RegionCountMessage.h"
-
 using namespace optriment;
 
-char* RegionCountMessage::toBytes() const
-{
+char* RegionCountMessage::toBytes() const {
     std::stringstream ss;
     ss << "{" << std::endl;
-    for (const auto& zoneCount : zoneCounts)
-    {
-        ss << "\"" << zoneCount.first << "_count: " << "\": " << zoneCount.second << "," << std::endl;
+    for (const auto& zoneCount : zoneCounts) {
+        ss << "\"" << zoneCount.first << "_count: "
+           << "\": " << zoneCount.second << "," << std::endl;
     }
     ss << "}" << std::endl;
     std::string str = ss.str();
@@ -21,14 +20,12 @@ char* RegionCountMessage::toBytes() const
     return result;
 }
 
-void RegionCountMessage::fromBytes(char* ptr, size_t len)
-{
+void RegionCountMessage::fromBytes(char* ptr, size_t len) {
     std::string str(ptr, len);
     std::stringstream ss(str);
     std::string token;
 
-    while (std::getline(ss, token, ','))
-    {
+    while (std::getline(ss, token, ',')) {
         std::string zone;
         uint32_t count;
         std::stringstream tokenStream(token);
@@ -38,7 +35,6 @@ void RegionCountMessage::fromBytes(char* ptr, size_t len)
     }
 }
 
-void RegionCountMessage::add(const std::string& zone, uint32_t count)
-{
+void RegionCountMessage::add(const std::string& zone, uint32_t count) {
     zoneCounts[zone] = count;
 }

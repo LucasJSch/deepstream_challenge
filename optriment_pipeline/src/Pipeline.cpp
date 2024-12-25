@@ -2,36 +2,31 @@
 
 using namespace optriment;
 
-static gboolean
-bus_call (GstBus * bus, GstMessage * msg, gpointer data)
-{
-  GMainLoop *loop = (GMainLoop *) data;
-  switch (GST_MESSAGE_TYPE (msg)) {
-    case GST_MESSAGE_EOS:
-      g_print("End of stream\n");
-      g_main_loop_quit(loop);
-      break;
-    case GST_MESSAGE_ERROR:{
-      gchar *debug = NULL;
-      GError *error = NULL;
-      gst_message_parse_error (msg, &error, &debug);
-      g_print("ERROR from element %s: %s\n",
-          GST_OBJECT_NAME (msg->src), error->message);
-      if (debug)
-        g_print("Error details: %s\n", debug);
-      g_free(debug);
-      g_error_free(error);
-      g_main_loop_quit(loop);
-      break;
+static gboolean bus_call(GstBus* bus, GstMessage* msg, gpointer data) {
+    GMainLoop* loop = (GMainLoop*)data;
+    switch (GST_MESSAGE_TYPE(msg)) {
+        case GST_MESSAGE_EOS:
+            g_print("End of stream\n");
+            g_main_loop_quit(loop);
+            break;
+        case GST_MESSAGE_ERROR: {
+            gchar* debug = NULL;
+            GError* error = NULL;
+            gst_message_parse_error(msg, &error, &debug);
+            g_print("ERROR from element %s: %s\n", GST_OBJECT_NAME(msg->src), error->message);
+            if (debug) g_print("Error details: %s\n", debug);
+            g_free(debug);
+            g_error_free(error);
+            g_main_loop_quit(loop);
+            break;
+        }
+        default:
+            break;
     }
-    default:
-      break;
-  }
-  return TRUE;
+    return TRUE;
 }
 
-Pipeline::Pipeline(const std::string& pipeline_name)
-{
+Pipeline::Pipeline(const std::string& pipeline_name) {
     // Create an empty pipeline
     pipeline = gst_pipeline_new(pipeline_name.c_str());
     if (!pipeline) {
@@ -49,21 +44,18 @@ Pipeline::~Pipeline() {
     }
 }
 
-void Pipeline::configErrorBus()
-{
-    bus = gst_pipeline_get_bus(GST_PIPELINE (getPipeline()));
+void Pipeline::configErrorBus() {
+    bus = gst_pipeline_get_bus(GST_PIPELINE(getPipeline()));
     bus_watch_id = gst_bus_add_watch(bus, bus_call, getLoop());
     gst_object_unref(bus);
 }
 
-Pipeline& Pipeline::addElement(const std::string& factory_name, const std::string& element_name)
-{
+Pipeline& Pipeline::addElement(const std::string& factory_name, const std::string& element_name) {
     return addElement(factory_name, element_name, "", "");
 }
 
 Pipeline& Pipeline::addElement(const std::string& factory_name, const std::string& element_name,
-const std::string& property_name, const std::string& property_value)
-{
+                               const std::string& property_name, const std::string& property_value) {
     GstElement* element = gst_element_factory_make(factory_name.c_str(), element_name.c_str());
     if (!element) {
         std::cerr << "Failed to create element: " << element_name << std::endl;
@@ -82,19 +74,15 @@ GstElement* Pipeline::getPipeline() const {
     return pipeline;
 }
 
-void Pipeline::checkElementsOk() const 
-{
-    for (const auto& pair : stages)
-    {
-        if (pair.second == nullptr)
-        {
+void Pipeline::checkElementsOk() const {
+    for (const auto& pair : stages) {
+        if (pair.second == nullptr) {
             std::cerr << "Element " << pair.first << " could not be created. Exiting." << std::endl;
         }
     }
 }
 
-void Pipeline::run()
-{
+void Pipeline::run() {
     gst_element_set_state(getPipeline(), GST_STATE_PLAYING);
 
     configErrorBus();
@@ -105,22 +93,19 @@ void Pipeline::run()
     stop();
 }
 
-void Pipeline::stop()
-{
+void Pipeline::stop() {
     gst_element_set_state(getPipeline(), GST_STATE_NULL);
     g_print("Deleting pipeline\n");
-    gst_object_unref(GST_OBJECT (getPipeline()));
+    gst_object_unref(GST_OBJECT(getPipeline()));
     g_source_remove(bus_watch_id);
     g_main_loop_unref(loop);
 }
 
-GstElement* Pipeline::getElement(const std::string& name)
-{
+GstElement* Pipeline::getElement(const std::string& name) {
     return stages[name];
 }
 
-GMainLoop* Pipeline::getLoop() const
-{
+GMainLoop* Pipeline::getLoop() const {
     return loop;
 }
 
@@ -131,27 +116,24 @@ void Pipeline::linkElements(std::initializer_list<std::string> elementNames) {
         elements.push_back(getElement(name));
     }
 
-    for (int i = 0; i < elements.size()-1; i++) {
-        if (!gst_element_link (elements[i], elements[i + 1]))
-        {
+    for (int i = 0; i < elements.size() - 1; i++) {
+        if (!gst_element_link(elements[i], elements[i + 1])) {
             log("Elements could not be linked. Exiting.\n");
             exit(-1);
         }
     }
 }
 
-void Pipeline::linkWithRequestPad(const std::string& sinkElementName, const std::string& srcElementName)
-{
+void Pipeline::linkWithRequestPad(const std::string& sinkElementName, const std::string& srcElementName) {
     return internalLinkWithRequestPad(sinkElementName, srcElementName, "sink_0", "src");
 }
 
-void Pipeline::linkWithRequestPadTee(const std::string& sinkElementName, const std::string& srcElementName)
-{
+void Pipeline::linkWithRequestPadTee(const std::string& sinkElementName, const std::string& srcElementName) {
     return internalLinkWithRequestPad(srcElementName, sinkElementName, "src_%u", "sink");
 }
 
-void Pipeline::internalLinkWithRequestPad(const std::string& sinkElementName, const std::string& srcElementName, const std::string& sinkName, const std::string& srcName)
-{
+void Pipeline::internalLinkWithRequestPad(const std::string& sinkElementName, const std::string& srcElementName,
+                                          const std::string& sinkName, const std::string& srcName) {
     GstPad *sinkpad, *srcpad;
     sinkpad = gst_element_request_pad_simple(getElement(sinkElementName), sinkName.c_str());
     if (!sinkpad) {
@@ -176,18 +158,15 @@ void Pipeline::internalLinkWithRequestPad(const std::string& sinkElementName, co
     gst_object_unref(srcpad);
 }
 
-void Pipeline::log(const std::string& message) const
-{
+void Pipeline::log(const std::string& message) const {
     g_printerr(message.c_str());
 }
 
-void Pipeline::log(const char* message) const
-{
+void Pipeline::log(const char* message) const {
     g_printerr(message);
 }
 
-void Pipeline::attachProbe(ProbeCallback cb, const std::string& elementName, const std::string& padName)
-{
+void Pipeline::attachProbe(ProbeCallback cb, const std::string& elementName, const std::string& padName) {
     GstPad* pad = gst_element_get_static_pad(getElement(elementName), padName.c_str());
     if (!pad) {
         log("Failed to get sink pad. Exiting.\n");
@@ -195,5 +174,5 @@ void Pipeline::attachProbe(ProbeCallback cb, const std::string& elementName, con
     }
 
     gst_pad_add_probe(pad, GST_PAD_PROBE_TYPE_BUFFER, cb, NULL, NULL);
-    gst_object_unref (pad);
+    gst_object_unref(pad);
 }
