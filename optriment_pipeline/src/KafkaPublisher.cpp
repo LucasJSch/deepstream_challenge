@@ -1,11 +1,8 @@
-#pragma once
-
 #include "KafkaPublisher.h"
 
 using namespace optriment;
 
-KafkaPublisher::KafkaPublisher(const std::string& brokers, const std::string& topic)
-{
+KafkaPublisher::KafkaPublisher(const std::string& brokers, const std::string& topic) {
     conf_ = std::shared_ptr<RdKafka::Conf>(RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL));
     brokers_ = brokers;
     topic_ = topic;
@@ -23,9 +20,8 @@ KafkaPublisher::KafkaPublisher(const std::string& brokers, const std::string& to
     }
 }
 
-void KafkaPublisher::publish(const std::shared_ptr<Serializable> message)
-{
+void KafkaPublisher::publish(const std::shared_ptr<Serializable> message) {
     char* payload = message->toBytes();
-    producer_->produce(topic_, RdKafka::Topic::PARTITION_UA, RdKafka::Producer::RK_MSG_COPY,
-        payload, strlen(payload), NULL, 0, 0, NULL, NULL);
+    producer_->produce(topic_, RdKafka::Topic::PARTITION_UA, RdKafka::Producer::RK_MSG_COPY, payload, strlen(payload),
+                       NULL, 0, 0, NULL, NULL);
 }
