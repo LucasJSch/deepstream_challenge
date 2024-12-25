@@ -23,8 +23,9 @@ if(TARGET_DEVICE STREQUAL "aarch64")
 endif()
 
 # Find source files and header files
-file(GLOB SRCS "./src/*.cpp")
+#file(GLOB SRCS "./src/*.cpp")
 file(GLOB INCS "./include/*.h")
+
 
 # Find GStreamer package
 find_package(PkgConfig REQUIRED)
@@ -37,7 +38,6 @@ include_directories(
     ../sources/includes
     /usr/local/cuda-${CUDA_VER}/include
     ${GSTREAMER_INCLUDE_DIRS}
-    #${LIBRDKAFKA_INCLUDE_DIR}
 )
 
 # Add the CUDA libraries
@@ -45,14 +45,7 @@ link_directories(
     /usr/local/cuda-${CUDA_VER}/lib64/
     ${LIB_INSTALL_DIR_2}
     ${LIB_INSTALL_DIR}
-    #/usr/local/lib/librdkafka
 )
-
-# Define the executable name
-set(APP optriment_pipeline)
-
-# Define the object files
-set(OBJS ${SRCS})
 
 # Link with GStreamer and CUDA libraries
 set(LIBS
@@ -64,18 +57,29 @@ set(LIBS
     -Wl,-rpath,${LIB_INSTALL_DIR}
 )
 
+################################# BUILD MODULES #######################################
+
+add_library(kafka_publisher STATIC src/KafkaPublisher.cpp)
+target_link_libraries(kafka_publisher rdkafka++)
+
+add_library(pipeline STATIC src/Pipeline.cpp)
+target_link_libraries(pipeline ${LIBS})
+
+add_library(region_count_message STATIC src/RegionCountMessage.cpp)
+target_link_libraries(region_count_message ${LIBS})
+
+
+################################# BUILD MAIN APP ######################################
+
 # Add executable
-#add_executable(${APP} ${SRCS})
+set(APP optriment_pipeline)
+add_executable(${APP} src/optriment_pipeline.cpp)
 
 # Link the libraries to the application
-#target_link_libraries(${APP} ${LIBS})
+target_link_libraries(${APP}
+${LIBS}
+kafka_publisher
+pipeline
+region_count_message
+)
 
-# Installation rules
-#install(TARGETS ${APP} DESTINATION ${APP_INSTALL_DIR})
-
-
-
-############# Build Kafka producer sample app ###############
-# Link librdkafka to the executable
-add_executable(kafka_producer src/kafka_producer.cpp)
-target_link_libraries(kafka_producer PUBLIC rdkafka++)
