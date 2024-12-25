@@ -95,8 +95,9 @@ void Pipeline::checkElementsOk() const
 
 void Pipeline::run()
 {
-    configErrorBus();
+    gst_element_set_state(getPipeline(), GST_STATE_PLAYING);
 
+    configErrorBus();
     g_print("Running... \n");
     g_main_loop_run(loop);
     g_print("Returned, stopping playback\n");
