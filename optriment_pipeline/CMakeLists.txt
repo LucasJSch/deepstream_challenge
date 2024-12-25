@@ -30,12 +30,14 @@ file(GLOB INCS "./include/*.h")
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0)
 
+
 # Set include directories
 include_directories(
     ${CMAKE_SOURCE_DIR}/include 
     ../sources/includes
     /usr/local/cuda-${CUDA_VER}/include
     ${GSTREAMER_INCLUDE_DIRS}
+    #${LIBRDKAFKA_INCLUDE_DIR}
 )
 
 # Add the CUDA libraries
@@ -43,6 +45,7 @@ link_directories(
     /usr/local/cuda-${CUDA_VER}/lib64/
     ${LIB_INSTALL_DIR_2}
     ${LIB_INSTALL_DIR}
+    #/usr/local/lib/librdkafka
 )
 
 # Define the executable name
@@ -62,11 +65,17 @@ set(LIBS
 )
 
 # Add executable
-add_executable(${APP} ${SRCS})
+#add_executable(${APP} ${SRCS})
 
 # Link the libraries to the application
-target_link_libraries(${APP} ${LIBS})
+#target_link_libraries(${APP} ${LIBS})
 
 # Installation rules
-install(TARGETS ${APP} DESTINATION ${APP_INSTALL_DIR})
+#install(TARGETS ${APP} DESTINATION ${APP_INSTALL_DIR})
 
+
+
+############# Build Kafka producer sample app ###############
+# Link librdkafka to the executable
+add_executable(kafka_producer src/kafka_producer.cpp)
+target_link_libraries(kafka_producer PUBLIC rdkafka++)
