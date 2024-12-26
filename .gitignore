@@ -1,0 +1,12 @@
+# Ignore .vscode directory
+.vscode/
+optriment_pipeline/.vscode/
+
+# Ignore .clang-format file
+optriment_pipeline/.clang-format
+
+# Ignore specific directories within optriment_pipeline
+optriment_pipeline/external/
+optriment_pipeline/lib/
+optriment_pipeline/build/
+
