@@ -1,5 +1,10 @@
+# Set the project name and version
 cmake_minimum_required(VERSION 3.10)
-project(prototype)
+project(nvds_msgconv_custom VERSION 6.1)
+
+# Set the package dependencies
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(PACKAGES glib-2.0 gobject-2.0 json-glib-1.0 uuid)
 
 set(CUDA_VER "12.6")
 # Check if CUDA version is set
@@ -22,23 +27,27 @@ if(TARGET_DEVICE STREQUAL "aarch64")
     add_definitions(-DPLATFORM_TEGRA)
 endif()
 
+# Find source files and header files
+file(GLOB SRCS "./src/*.cpp")
+
 # Find GStreamer package
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0)
 
-# Set include directories
+# Include directories
 include_directories(
     ${CMAKE_SOURCE_DIR}/include 
-    ../sources/includes
     /usr/local/cuda-${CUDA_VER}/include
     ${GSTREAMER_INCLUDE_DIRS}
+    ./include
+    ${PACKAGES_INCLUDE_DIRS}
 )
 
-# Add the CUDA libraries
+# Link directories (if required, you can add them here)
 link_directories(
+    ${LIB_INSTALL_DIR}
     /usr/local/cuda-${CUDA_VER}/lib64/
     ${LIB_INSTALL_DIR_2}
-    ${LIB_INSTALL_DIR}
 )
 
 # Link with GStreamer and CUDA libraries
@@ -51,30 +60,14 @@ set(LIBS
     -Wl,-rpath,${LIB_INSTALL_DIR}
 )
 
-################################# BUILD MODULES #######################################
+# Define the target library
+add_library(nvds_msgconv_custom SHARED ${SRCS})
 
-add_library(kafka_publisher STATIC src/KafkaPublisher.cpp)
-target_link_libraries(kafka_publisher rdkafka++)
-
-add_library(pipeline STATIC src/Pipeline.cpp)
-target_link_libraries(pipeline ${LIBS})
-
-add_library(region_count_message STATIC src/RegionCountMessage.cpp)
-target_link_libraries(region_count_message ${LIBS})
-
-add_subdirectory(lib)
-
-################################# BUILD MAIN APP ######################################
-
-# Add executable
-set(APP optriment_pipeline)
-add_executable(${APP} src/optriment_pipeline.cpp)
-
-# Link the libraries to the application
-target_link_libraries(${APP}
-${LIBS}
-kafka_publisher
-pipeline
-region_count_message
+# Link the required libraries
+target_link_libraries(nvds_msgconv_custom
+    yaml-cpp
+    ${LIBS}
 )
+
+
 

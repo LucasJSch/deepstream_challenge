@@ -7,6 +7,5 @@ optriment_pipeline/.clang-format
 
 # Ignore specific directories within optriment_pipeline
 optriment_pipeline/external/
-optriment_pipeline/lib/
 optriment_pipeline/build/
 
