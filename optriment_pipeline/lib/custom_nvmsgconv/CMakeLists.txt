@@ -21,6 +21,8 @@ set(CMAKE_BUILD_TYPE Debug)
 # Set installation directories
 set(LIB_INSTALL_DIR "/opt/nvidia/deepstream/deepstream-${NVDS_VERSION}/lib/")
 set(APP_INSTALL_DIR "/opt/nvidia/deepstream/deepstream-${NVDS_VERSION}/bin/")
+set(GST_INSTALL_DIR "/opt/nvidia/deepstream/deepstream-7.1/lib/gst-plugins/")
+set(GST_INSTALL_DIR2 "/opt/nvidia/deepstream/deepstream-7.1/lib/")
 
 # Platform-specific flags for Tegra devices
 if(TARGET_DEVICE STREQUAL "aarch64")
@@ -41,6 +43,8 @@ include_directories(
     ${GSTREAMER_INCLUDE_DIRS}
     ./include
     ${PACKAGES_INCLUDE_DIRS}
+    /opt/nvidia/deepstream/deepstream-7.1/sources/libs
+    /opt/nvidia/deepstream/deepstream-7.1/sources/includes
 )
 
 # Link directories (if required, you can add them here)
@@ -48,6 +52,11 @@ link_directories(
     ${LIB_INSTALL_DIR}
     /usr/local/cuda-${CUDA_VER}/lib64/
     ${LIB_INSTALL_DIR_2}
+    /sources/libs
+    ${glib_2_0_LIBRARY_DIRS}
+    ${gobject_2_0_LIBRARY_DIRS}
+    ${json_glib_1_0_LIBRARY_DIRS}
+    ${uuid_LIBRARY_DIRS}
 )
 
 # Link with GStreamer and CUDA libraries
@@ -57,6 +66,10 @@ set(LIBS
     -lnvdsgst_meta
     -lnvds_meta
     -lnvds_yml_parser
+    -lnvdsgst_helper
+    -lnvdsgst_3d_gst
+    -lnvds_3d_common
+    -ldl
     -Wl,-rpath,${LIB_INSTALL_DIR}
 )
 
@@ -67,7 +80,16 @@ add_library(nvds_msgconv_custom SHARED ${SRCS})
 target_link_libraries(nvds_msgconv_custom
     yaml-cpp
     ${LIBS}
+    uuid
+    #json-glib-1.0
+    glib-2.0
+    gobject-2.0
 )
 
-
-
+# Install the plugin library (shared object .so) to the GStreamer plugin directory
+install(TARGETS nvds_msgconv_custom
+    LIBRARY DESTINATION ${GST_INSTALL_DIR}
+)
+install(TARGETS nvds_msgconv_custom
+    LIBRARY DESTINATION ${GST_INSTALL_DIR2}
+)

@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "custom-nvmsgconv.h"
 #include "ArgParser.h"
 #include "KafkaPublisher.h"
 #include "Pipeline.h"
@@ -82,6 +83,18 @@ int main(int argc, char *argv[]) {
     optriment::Pipeline pipeline("optriment-pipeline");
     // Create elements for the pipeline
     pipeline.addElement("filesrc", "file-source")
+        //.addElement("h264parse", "h264-parser")
+        //.addElement("nvv4l2decoder", "nvv4l2-decoder")
+        //.addElement("nvstreammux", "stream-muxer")
+        //.addElement("nvtracker", "tracker")
+        //.addElement("nvdsanalytics", "analytics1", "config-file", roi1_config)
+        //.addElement("nvdsanalytics", "analytics2", "config-file", roi2_config)
+        //.addElement("nvinfer", "pgie")
+        //.addElement("nvvideoconvert", "nvvideo-converter")
+        //.addElement("nvdsosd", "on-screen-display")
+        //.addElement("nvmsgbroker", "msg-broker")
+        //.addElement("nvmsgconv", "msg-converter");
+        //.addElement("nveglglessink", "video-renderer");
         .addElement("h264parse", "h264-parser")
         .addElement("nvv4l2decoder", "nvv4l2-decoder")
         .addElement("nvstreammux", "stream-muxer")
@@ -91,13 +104,22 @@ int main(int argc, char *argv[]) {
         .addElement("nvinfer", "pgie")
         .addElement("nvvideoconvert", "nvvideo-converter")
         .addElement("nvdsosd", "on-screen-display")
+        // Tee to stream video and Kafka messages in parallel
+        .addElement("tee", "broker-video-tee")
+        .addElement("queue", "broker-tee")
+        .addElement("nvmsgbroker", "msg-broker")
+        .addElement("queue", "video-tee")
+        .addElement("custom_nvmsgconv", "msg-converter")
         .addElement("nveglglessink", "video-renderer");
+
 
     RETURN_ON_PARSER_ERROR(nvds_parse_gie_type(&pgie_type, file_path, "primary-gie"));
     RETURN_ON_PARSER_ERROR(nvds_parse_file_source(pipeline.getElement("file-source"), file_path, "source"));
     RETURN_ON_PARSER_ERROR(nvds_parse_streammux(pipeline.getElement("stream-muxer"), file_path, "streammux"));
     RETURN_ON_PARSER_ERROR(nvds_parse_gie(pipeline.getElement("pgie"), file_path, "primary-gie"));
     RETURN_ON_PARSER_ERROR(nvds_parse_tracker(pipeline.getElement("tracker"), file_path, "tracker"));
+    RETURN_ON_PARSER_ERROR(nvds_parse_msgconv (pipeline.getElement("msg-converter"), file_path, "msgconv_custom"));
+    RETURN_ON_PARSER_ERROR(nvds_parse_msgbroker(pipeline.getElement("msg-broker"), file_path, "msgbroker"));
 
     if (!pipeline.getPipeline()) {
         g_printerr("One element could not be created. Exiting.\n");
@@ -108,12 +130,20 @@ int main(int argc, char *argv[]) {
     // Linking.
     pipeline.linkWithRequestPad("stream-muxer", "nvv4l2-decoder");
     pipeline.linkElements({"file-source", "h264-parser", "nvv4l2-decoder"});
-    pipeline.linkElements({"stream-muxer", "pgie", "tracker", "analytics1", "analytics2", "nvvideo-converter",
-                           "on-screen-display", "video-renderer"});
+    pipeline.linkElements({"stream-muxer","pgie", "tracker", "analytics1",
+                           "analytics2", "nvvideo-converter",
+                           "on-screen-display", "broker-video-tee"});
+    pipeline.linkElements({"broker-tee", "msg-converter", "msg-broker"});
+    pipeline.linkElements({"video-tee", "video-renderer"});
+    pipeline.linkWithRequestPadTee("broker-tee", "broker-video-tee");
+    pipeline.linkWithRequestPadTee("video-tee", "broker-video-tee");
+    //pipeline.linkElements({"stream-muxer", "pgie", "tracker", "analytics1", "analytics2", "nvvideo-converter",
+    //                       "on-screen-display", "video-renderer"});
+    //                       "msg-converter", "msg-broker"});
 
-    pipeline.attachProbe(
-        [](GstPad *pad, GstPadProbeInfo *info, gpointer u_data) { return probe(pad, info, u_data, kafka_publisher); },
-        "analytics2", "src");
+    //pipeline.attachProbe(
+    //    [](GstPad *pad, GstPadProbeInfo *info, gpointer u_data) { return probe(pad, info, u_data, kafka_publisher); },
+    //    "analytics2", "src");
 
     pipeline.run();
     return 0;

@@ -17,6 +17,7 @@ set(CMAKE_BUILD_TYPE Debug)
 set(LIB_INSTALL_DIR "/opt/nvidia/deepstream/deepstream-${NVDS_VERSION}/lib/")
 set(APP_INSTALL_DIR "/opt/nvidia/deepstream/deepstream-${NVDS_VERSION}/bin/")
 
+
 # Platform-specific flags for Tegra devices
 if(TARGET_DEVICE STREQUAL "aarch64")
     add_definitions(-DPLATFORM_TEGRA)
@@ -32,6 +33,7 @@ include_directories(
     ../sources/includes
     /usr/local/cuda-${CUDA_VER}/include
     ${GSTREAMER_INCLUDE_DIRS}
+    ./lib/custom_nvmsgconv/include
 )
 
 # Add the CUDA libraries
@@ -76,5 +78,6 @@ ${LIBS}
 kafka_publisher
 pipeline
 region_count_message
+nvds_msgconv_custom
 )
 

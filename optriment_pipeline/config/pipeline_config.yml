@@ -31,7 +31,7 @@ primary-gie:
   plugin-type: 0
   config-file-path: dstest2_pgie_config.yml
 
-msgconv:
+msgconv_custom:
   #If you want to send images, please set the "payload-type: 1" and "msg2p-newapi: 1"
   payload-type: 1
   msg2p-newapi: 1
