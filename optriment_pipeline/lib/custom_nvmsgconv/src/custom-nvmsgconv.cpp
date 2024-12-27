@@ -12,7 +12,7 @@
 #include "custom-nvmsgconv.h"
 #include "deepstream_schema.h"
 #include <json-glib/json-glib.h>
-#include <uuid.h>
+//#include <uuid.h>
 #include <stdlib.h>
 #include <iostream>
 #include <fstream>

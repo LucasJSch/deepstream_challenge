@@ -4,7 +4,8 @@ project(nvds_msgconv_custom VERSION 6.1)
 
 # Set the package dependencies
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(PACKAGES glib-2.0 gobject-2.0 json-glib-1.0 uuid)
+#pkg_check_modules(PACKAGES glib-2.0 gobject-2.0 json-glib-1.0 uuid gio-2.0)
+pkg_check_modules(PACKAGES glib-2.0 gobject-2.0 json-glib-1.0 gio-2.0)
 
 set(CUDA_VER "12.6")
 # Check if CUDA version is set
@@ -45,6 +46,12 @@ include_directories(
     ${PACKAGES_INCLUDE_DIRS}
     /opt/nvidia/deepstream/deepstream-7.1/sources/libs
     /opt/nvidia/deepstream/deepstream-7.1/sources/includes
+    /usr/include/json-glib-1.0
+    /usr/include/libmount
+    /usr/include/blkid
+    /usr/include/glib-2.0
+    /usr/lib/x86_64-linux-gnu/glib-2.0/include
+    #/usr/include/uuid
 )
 
 # Link directories (if required, you can add them here)
@@ -53,10 +60,12 @@ link_directories(
     /usr/local/cuda-${CUDA_VER}/lib64/
     ${LIB_INSTALL_DIR_2}
     /sources/libs
-    ${glib_2_0_LIBRARY_DIRS}
-    ${gobject_2_0_LIBRARY_DIRS}
-    ${json_glib_1_0_LIBRARY_DIRS}
-    ${uuid_LIBRARY_DIRS}
+    #${glib_2_0_LIBRARY_DIRS}
+    #${gobject_2_0_LIBRARY_DIRS}
+    #${json_glib_1_0_LIBRARY_DIRS}
+    #${uuid_LIBRARY_DIRS}
+    #${gio-2_0_LIBRARY_DIRS}
+    /usr/lib/x86_64-linux-gnu
 )
 
 # Link with GStreamer and CUDA libraries
@@ -70,6 +79,10 @@ set(LIBS
     -lnvdsgst_3d_gst
     -lnvds_3d_common
     -ldl
+    -lgio-2.0
+    #-luuid
+    -ljson-glib-1.0
+    -lglib-2.0
     -Wl,-rpath,${LIB_INSTALL_DIR}
 )
 
@@ -80,10 +93,16 @@ add_library(nvds_msgconv_custom SHARED ${SRCS})
 target_link_libraries(nvds_msgconv_custom
     yaml-cpp
     ${LIBS}
-    uuid
-    #json-glib-1.0
-    glib-2.0
-    gobject-2.0
+    #${gio_2_0_LIBRARIES}
+    #${glib_2_0_LIBRARIES}
+    #${gobject_2_0_LIBRARIES}
+    #${json_glib_1_0_LIBRARIES}
+    #${uuid_LIBRARIES}
+    ##glib-2.0
+    ##gobject-2.0
+    ##gio-2.0
+    ##json-glib-1.0
+    ##uuid
 )
 
 # Install the plugin library (shared object .so) to the GStreamer plugin directory

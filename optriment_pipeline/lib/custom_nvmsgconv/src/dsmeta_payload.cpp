@@ -10,7 +10,7 @@
  */
 
 #include <json-glib/json-glib.h>
-#include <uuid.h>
+//#include <uuid.h>
 #include <stdlib.h>
 #include <fstream>
 #include <sstream>
@@ -274,8 +274,8 @@ generate_object_object (void *privData, NvDsFrameMeta *frame_meta, NvDsObjectMet
 static JsonObject* generate_event_object (NvDsObjectMeta *obj_meta)
 {
   JsonObject *eventObj;
-  uuid_t uuid;
-  gchar uuidStr[37];
+  //uuid_t uuid;
+  //gchar uuidStr[37];
 
   /*
    * "event": {
@@ -284,11 +284,11 @@ static JsonObject* generate_event_object (NvDsObjectMeta *obj_meta)
      }
    */
 
-  uuid_generate_random (uuid);
-  uuid_unparse_lower(uuid, uuidStr);
+  //uuid_generate_random (uuid);
+  //uuid_unparse_lower(uuid, uuidStr);
 
   eventObj = json_object_new ();
-  json_object_set_string_member (eventObj, "id", uuidStr);
+  //json_object_set_string_member (eventObj, "id", uuidStr);
   json_object_set_string_member (eventObj, "type", "");
   return eventObj;
 }
@@ -307,11 +307,11 @@ gchar* generate_dsmeta_message (void *privData, void *frameMeta, void *objMeta)
   NvDsFrameMeta *frame_meta = (NvDsFrameMeta *)frameMeta;
   NvDsObjectMeta *obj_meta  = (NvDsObjectMeta *)objMeta;
 
-  uuid_t msgId;
-  gchar msgIdStr[37];
+  //uuid_t msgId;
+  //gchar msgIdStr[37];
 
-  uuid_generate_random (msgId);
-  uuid_unparse_lower(msgId, msgIdStr);
+  //uuid_generate_random (msgId);
+  //uuid_unparse_lower(msgId, msgIdStr);
 
   // place object
   placeObj = generate_place_object (privData, frame_meta);
@@ -332,7 +332,7 @@ gchar* generate_dsmeta_message (void *privData, void *frameMeta, void *objMeta)
 
   // root object
   rootObj = json_object_new ();
-  json_object_set_string_member (rootObj, "messageid", msgIdStr);
+  //json_object_set_string_member (rootObj, "messageid", msgIdStr);
   json_object_set_string_member (rootObj, "mdsversion", "1.0");
   json_object_set_string_member (rootObj, "@timestamp", ts);
   json_object_set_object_member (rootObj, "place", placeObj);
@@ -344,25 +344,27 @@ gchar* generate_dsmeta_message (void *privData, void *frameMeta, void *objMeta)
   json_object_set_string_member (rootObj, "videoPath", "");
 
   //Search for any custom message blob within frame usermeta list
-  JsonArray *jArray = json_array_new ();
+  /*JsonArray *jArray = json_array_new ();
+  bool print_jarray = false;
   for (NvDsUserMetaList *l = frame_meta->frame_user_meta_list; l; l = l->next) {
     NvDsUserMeta *frame_usermeta = (NvDsUserMeta *) l->data;
     if(frame_usermeta && frame_usermeta->base_meta.meta_type == NVDS_CUSTOM_MSG_BLOB) {
+      print_jarray = true;
       NvDsCustomMsgInfo *custom_blob = (NvDsCustomMsgInfo *) frame_usermeta->user_meta_data;
       string msg = string((const char *) custom_blob->message, custom_blob->size);
       json_array_add_string_element (jArray, msg.c_str());
     }
   }
-  if(json_array_get_length(jArray) > 0)
-    json_object_set_array_member (rootObj, "customMessage", jArray);
+  if (print_jarray)
+    json_object_set_object_member (rootObj, "customMessage", jArray);
   else
-    json_array_unref(jArray);
+    json_array_unref (jArray);*/
 
-  rootNode = json_node_new (JSON_NODE_OBJECT);
-  json_node_set_object (rootNode, rootObj);
+  //rootNode = json_node_new (JSON_NODE_OBJECT);
+  //json_node_set_object (rootNode, rootObj);
 
   message = json_to_string (rootNode, TRUE);
-  json_node_free (rootNode);
+  //json_node_free (rootNode);
   json_object_unref (rootObj);
 
   return message;
@@ -467,25 +469,27 @@ gchar* generate_dsmeta_message_minimal (void *privData, void *frameMeta)
   json_object_set_string_member (jobject, "@timestamp", ts);
   json_object_set_string_member (jobject, "sensorId", sensorId.c_str());
 
-  json_object_set_array_member (jobject, "objects", jArray);
+  //json_object_set_array_member (jobject, "objects", jArray);
 
-  JsonArray *custMsgjArray = json_array_new ();
+  /*JsonArray *custMsgjArray = json_array_new ();
   //Search for any custom message blob within frame usermeta list
+  bool print_jarray = false;
   for (NvDsUserMetaList *l = frame_meta->frame_user_meta_list; l; l = l->next) {
     NvDsUserMeta *frame_usermeta = (NvDsUserMeta *) l->data;
     if(frame_usermeta && frame_usermeta->base_meta.meta_type == NVDS_CUSTOM_MSG_BLOB) {
+      print_jarray = true;
       NvDsCustomMsgInfo *custom_blob = (NvDsCustomMsgInfo *) frame_usermeta->user_meta_data;
       string msg = string((const char *) custom_blob->message, custom_blob->size);
       json_array_add_string_element (custMsgjArray,  msg.c_str());
     }
   }
-  if(json_array_get_length(custMsgjArray) > 0)
+  if (print_jarray)
     json_object_set_array_member (jobject, "customMessage", custMsgjArray);
   else
-    json_array_unref(custMsgjArray);
+    json_array_unref (custMsgjArray);*/
 
-  rootNode = json_node_new (JSON_NODE_OBJECT);
-  json_node_set_object (rootNode, jobject);
+  //rootNode = json_node_new (JSON_NODE_OBJECT);
+  //json_node_set_object (rootNode, jobject);
 
   message = json_to_string (rootNode, TRUE);
   json_node_free (rootNode);

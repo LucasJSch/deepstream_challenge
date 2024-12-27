@@ -10,7 +10,7 @@
  */
 
 #include <json-glib/json-glib.h>
-#include <uuid.h>
+//#include <uuid.h>
 #include <stdlib.h>
 #include <fstream>
 #include <sstream>
@@ -226,8 +226,8 @@ static JsonObject*
 generate_event_object (void *privData, NvDsEventMsgMeta *meta)
 {
   JsonObject *eventObj;
-  uuid_t uuid;
-  gchar uuidStr[37];
+  //uuid_t uuid;
+  //gchar uuidStr[37];
 
   /*
    * "event": {
@@ -236,11 +236,11 @@ generate_event_object (void *privData, NvDsEventMsgMeta *meta)
      }
    */
 
-  uuid_generate_random (uuid);
-  uuid_unparse_lower(uuid, uuidStr);
+  //uuid_generate_random (uuid);
+  //uuid_unparse_lower(uuid, uuidStr);
 
   eventObj = json_object_new ();
-  json_object_set_string_member (eventObj, "id", uuidStr);
+  //json_object_set_string_member (eventObj, "id", uuidStr);
 
   switch (meta->type) {
     case NVDS_EVENT_ENTRY:
@@ -516,10 +516,10 @@ generate_object_object (void *privData, NvDsEventMsgMeta *meta)
         json_array_add_double_element (polygonArray, value);
       }
 
-      json_array_add_array_element (maskArray, polygonArray);
+      //json_array_add_array_element (maskArray, polygonArray);
     }
 
-    json_object_set_array_member (objectObj, "maskoutline", maskArray);
+    //json_object_set_object_member (objectObj, "maskoutline", maskArray);
   }
 
   // signature sub array
@@ -529,7 +529,7 @@ generate_object_object (void *privData, NvDsEventMsgMeta *meta)
     for (i = 0; i < meta->objSignature.size; i++) {
       json_array_add_double_element (jArray, meta->objSignature.signature[i]);
     }
-    json_object_set_array_member (objectObj, "signature", jArray);
+    //json_object_set_object_member (objectObj, "signature", jArray);
   }
 
   // location sub object
@@ -560,11 +560,11 @@ gchar* generate_event_message (void *privData, NvDsEventMsgMeta *meta)
   JsonObject *objectObj;
   gchar *message;
 
-  uuid_t msgId;
-  gchar msgIdStr[37];
+  //uuid_t msgId;
+  //gchar msgIdStr[37] = "123";
 
-  uuid_generate_random (msgId);
-  uuid_unparse_lower(msgId, msgIdStr);
+  //uuid_generate_random (msgId);
+  //uuid_unparse_lower(msgId, msgIdStr);
 
   // place object
   placeObj = generate_place_object (privData, meta);
@@ -583,7 +583,7 @@ gchar* generate_event_message (void *privData, NvDsEventMsgMeta *meta)
 
   // root object
   rootObj = json_object_new ();
-  json_object_set_string_member (rootObj, "messageid", msgIdStr);
+  //json_object_set_string_member (rootObj, "messageid", msgIdStr);
   json_object_set_string_member (rootObj, "mdsversion", "1.0");
   json_object_set_string_member (rootObj, "@timestamp", meta->ts);
   json_object_set_object_member (rootObj, "place", placeObj);
@@ -597,8 +597,8 @@ gchar* generate_event_message (void *privData, NvDsEventMsgMeta *meta)
   else
     json_object_set_string_member (rootObj, "videoPath", "");
 
-  rootNode = json_node_new (JSON_NODE_OBJECT);
-  json_node_set_object (rootNode, rootObj);
+  //rootNode = json_node_new (JSON_NODE_OBJECT);
+  //json_node_set_object (rootNode, rootObj);
 
   message = json_to_string (rootNode, TRUE);
   json_node_free (rootNode);
@@ -846,12 +846,12 @@ gchar* generate_event_message_minimal (void *privData, NvDsEvent *events, guint 
     json_object_set_string_member (jobject, "sensorId", "0");
   }
 
-  json_object_set_array_member (jobject, "objects", jArray);
-  if (maskArray && json_array_get_length (maskArray) > 0)
-    json_object_set_array_member (jobject, "masks", maskArray);
+  //json_object_set_object_member (jobject, "objects", jArray);
+  //if (maskArray && json_array_get_length (maskArray) > 0)
+  //  json_object_set_object_member (jobject, "masks", maskArray);
 
-  rootNode = json_node_new (JSON_NODE_OBJECT);
-  json_node_set_object (rootNode, jobject);
+  //rootNode = json_node_new (JSON_NODE_OBJECT);
+  //json_node_set_object (rootNode, jobject);
 
   message = json_to_string (rootNode, TRUE);
   json_node_free (rootNode);
