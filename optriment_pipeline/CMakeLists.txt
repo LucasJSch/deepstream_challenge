@@ -23,12 +23,14 @@ if(TARGET_DEVICE STREQUAL "aarch64")
 endif()
 
 # Find source files and header files
-file(GLOB SRCS "./src/*.cpp")
+#file(GLOB SRCS "./src/*.cpp")
 file(GLOB INCS "./include/*.h")
+
 
 # Find GStreamer package
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0)
+
 
 # Set include directories
 include_directories(
@@ -45,12 +47,6 @@ link_directories(
     ${LIB_INSTALL_DIR}
 )
 
-# Define the executable name
-set(APP optriment_pipeline)
-
-# Define the object files
-set(OBJS ${SRCS})
-
 # Link with GStreamer and CUDA libraries
 set(LIBS
     ${GSTREAMER_LIBRARIES}
@@ -61,12 +57,29 @@ set(LIBS
     -Wl,-rpath,${LIB_INSTALL_DIR}
 )
 
+################################# BUILD MODULES #######################################
+
+add_library(kafka_publisher STATIC src/KafkaPublisher.cpp)
+target_link_libraries(kafka_publisher rdkafka++)
+
+add_library(pipeline STATIC src/Pipeline.cpp)
+target_link_libraries(pipeline ${LIBS})
+
+add_library(region_count_message STATIC src/RegionCountMessage.cpp)
+target_link_libraries(region_count_message ${LIBS})
+
+
+################################# BUILD MAIN APP ######################################
+
 # Add executable
-add_executable(${APP} ${SRCS})
+set(APP optriment_pipeline)
+add_executable(${APP} src/optriment_pipeline.cpp)
 
 # Link the libraries to the application
-target_link_libraries(${APP} ${LIBS})
-
-# Installation rules
-install(TARGETS ${APP} DESTINATION ${APP_INSTALL_DIR})
+target_link_libraries(${APP}
+${LIBS}
+kafka_publisher
+pipeline
+region_count_message
+)
 

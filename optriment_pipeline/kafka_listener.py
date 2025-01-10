@@ -1,18 +1,48 @@
 import json
 from confluent_kafka import Consumer, KafkaException, KafkaError
+from time import sleep
 
-# Kafka configuration based on DeepStream msgbroker settings
 conf = {
     'bootstrap.servers': 'localhost:9092',  # Kafka broker connection string
     'group.id': 'deepstream-consumer-group',  # Consumer group ID (can be customized)
     'auto.offset.reset': 'earliest'  # Start from the earliest message
 }
 
-consumer = Consumer(conf)
 topic = 'topic1'
-consumer.subscribe([topic])
+consumer = Consumer(conf)
 
+def wait_for_topic(topic_name):
+    print(f"Waiting for topic '{topic_name}' to be available...")
+    while True:
+        try:
+            # Try subscribing to the topic
+            consumer.subscribe([topic_name])
+
+            # Try polling a message (without blocking too long)
+            msg = consumer.poll(timeout=1.0)
+            if msg is not None:
+                if msg.error():
+                    if msg.error().code() == KafkaError.UNKNOWN_TOPIC_OR_PART:
+                        print(f"Topic '{topic_name}' does not exist, retrying...")
+                        sleep(2)  # Wait for 2 seconds before retrying
+                    else:
+                        raise KafkaException(msg.error())
+                else:
+                    print(f"Topic '{topic_name}' exists, starting to consume messages.")
+                    break
+            else:
+                sleep(2)
+                print(f"Retrying...")
+
+        except KafkaException as e:
+            print(f"Error: {e}")
+            sleep(2)
+
+# Subscribe to the Kafka topic and consume messages
 def consume_messages():
+    # Wait for the topic to exist
+    wait_for_topic(topic)
+
     try:
         while True:
             msg = consumer.poll(timeout=1.0) 
